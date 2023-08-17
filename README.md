@@ -1,5 +1,6 @@
 # FOR EDUCATION PURPOSES ONLY
 # I will not be responsible for any misuse of this software, any damage caused, or any suspensions/bans that may occur from using it.
+As a sidenote, please do NOT DDoS codebreaker.xyz or the admins are going to come after my ass.
 # cbr-submitter-og
 Submit your Codebreaker solutions straight from your terminal!
 
