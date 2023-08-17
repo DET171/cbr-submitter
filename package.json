@@ -1,0 +1,10 @@
+{
+  "name": "cbr-submitter-og",
+  "type": "module",
+  "packageManager": "yarn@3.6.1",
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.15.8",
+    "eslint": ">= 3",
+    "eslint-config-berry": "latest"
+  }
+}
