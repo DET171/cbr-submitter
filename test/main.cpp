@@ -1,70 +1,45 @@
 #include <bits/stdc++.h>
+#define l long
+#define d double
+#define str string
+#define ll l l
+#define ull unsigned ll
+#define endl "\n"
+#define fori(x, y) for (ll i = x; i < y; i++)
+#define in(x) cin >> x;
+#define outln(x) cout << x << endl;
+#define out(x) cout << x << " ";
+#define pb push_back
+#define pf push_front
 using namespace std;
 
-#define INF (1e9)
+int main(int argc, char** argv) {
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
 
-struct Node {
-  int idx;
-  int wt;
+	ll N, M;
+	cin >> N >> M;
+	deque<ll> A, B, X;
+	fori (0, N) {
+		ll x;
+		cin >> x;
+		A.pf(x);
+		X.pb(x);
+	}
+	fori (0, M) {
+		ll x;
+		cin >> x;
+		B.pb(x);
+	}
 
-  Node(int _idx, int _wt) {
-    idx = _idx;
-    wt = _wt;
-  }
+	fori (0, N) {
+		ll x = X[i];
+		auto xx = find(B.begin(), B.end(), x);
 
-  bool operator<(const Node &other) const { return wt > other.wt; }
-};
+		if (xx == B.end()) A.erase(std::remove(A.begin(), A.end(), x), A.end());
+	}
 
-struct Edge {
-  int to, wt;
-
-  Edge(int _to, int _wt) {
-    to = _to;
-    wt = _wt;
-  }
-};
-
-int main() {
-  ios::sync_with_stdio(false);
-  cin.tie(0);
-  cout.tie(0);
-
-  int n, m;
-  cin >> n >> m;
-
-  vector<vector<Edge>> g(n);
-  for (int i = 0; i < m; i++) {
-    int u, v, w;
-    cin >> u >> v >> w;
-    g[u - 1].push_back(Edge(v - 1, w));
-    g[v - 1].push_back(Edge(u - 1, w));
-  }
-
-  vector<int> dist(n, INF);
-  dist[0] = 0;
-
-  priority_queue<Node> q;
-  q.push(Node(0, 0));
-
-  while (!q.empty()) {
-    Node cur = q.top();
-    q.pop();
-
-    int currdist = dist[cur.idx];
-    if (currdist < cur.wt) {
-      continue;
-    }
-
-    for (Edge edge : g[cur.idx]) {
-      int alt = currdist + edge.wt;
-      if (alt < dist[edge.to]) {
-        dist[edge.to] = alt;
-        q.push(Node(edge.to, alt));
-      }
-    }
-  }
-
-  cout << dist[n - 1] << endl;
-
-  return 0;
+	for (auto i: A) {
+		out(i);
+	}
 }

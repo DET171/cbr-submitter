@@ -1,25 +1,8 @@
 import puppeteer from 'puppeteer';
-import ora from 'ora';
 import fs from 'fs/promises';
 import path from 'path';
-import chalk from 'chalk';
-import console from 'consola';
-import { Table } from 'console-table-printer';
 
-export async function submitCode(filename, token, url) {
-	const spinner = ora('Submitting code...').start();
-	const table = new Table({
-		columns: [
-			{ name: 'testcase', alignment: 'left' },
-			{ name: 'score', alignment: 'left' },
-			{ name: 'status', alignment: 'left' },
-			{ name: 'time', alignment: 'left' },
-			{ name: 'memory', alignment: 'left' },
-		],
-	});
-
-	const code = await fs.readFile(path.join(process.cwd(), filename), 'utf-8');
-
+export async function submitCode(code, token, url, opts) {
 	const browser = await puppeteer.launch({
 		headless: 'new',
 		defaultViewport: null,
@@ -45,14 +28,18 @@ export async function submitCode(filename, token, url) {
 		waitUntil: 'networkidle0',
 	});
 
-	// take a screenshot
-	await fs.mkdir('out', { recursive: true });
-	await page.screenshot({
-		path: 'out/screenshot.png',
-		fullPage: true,
-	});
 
-	const scores = await page.evaluate(() => {
+	const submissionUrl = page.url();
+	// take a screenshot
+	if (opts.screenshot) {
+		await fs.mkdir('out', { recursive: true });
+		await page.screenshot({
+			path: opts.screenshot.path || path.join(process.cwd(), 'out/screenshot.png'),
+			fullPage: true,
+		});
+	}
+
+	const testcases = await page.evaluate(() => {
 		const container = document.getElementById('submission-subtasks-container');
 		const subtasks = Array.from(container.querySelectorAll('div[id*="subtask"] tbody > tr'));
 		const results = [];
@@ -78,14 +65,48 @@ export async function submitCode(filename, token, url) {
 		return results;
 	});
 
-	// stop spinner
-	spinner.stop();
-	console.success(chalk.green('Code submitted successfully!'));
-	console.info(chalk.blue('Screenshot saved to out/screenshot.png'));
-	// print table
-	table.addRows(scores);
-	table.printTable();
+	// check if overall verdict is AC, PS or WA
+	const subtasksScores = await page.evaluate(() => {
+		function extractScore(inputString) {
+			const pattern = /Subtask \d+: \((\d+)\/(\d+)\)/;
+			const match = inputString.match(pattern);
+
+			if (match) {
+				const score = match[1];
+				const total = match[2];
+				return { score, total };
+			}
+
+			return null;
+		}
+
+		const container = document.getElementById('submission-subtasks-container');
+		const subtasks = Array.from(container.querySelectorAll(':scope div[data-target*="subtask"] > h6'));
+		const scores = subtasks.map((subtask, i) => {
+			const score = extractScore(subtask.innerText.trim());
+			return {
+				subtask: i + 1,
+				...score,
+			};
+		});
+
+		return scores;
+	});
+
+	const totalScore = subtasksScores.reduce((acc, curr) => {
+		return acc + Number(curr.score);
+	}, 0);
+
+	const verdict = totalScore === 100 ? 'AC' : (totalScore === 0 ? 'WA' : 'PS');
 
 
-	return browser.close();
+	browser.close();
+
+	return {
+		submissionUrl,
+		testcases,
+		subtasks: subtasksScores,
+		verdict,
+		totalScore,
+	};
 }
